@@ -1,0 +1,55 @@
+version: '3.5'
+
+services:
+  {project-name}-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: {project-name}-api
+    image: {project-name}
+    volumes:
+      - ./:/app:rw
+    env_file: .env
+    networks:
+      - {project-name}-proxy
+    ports:
+      - "5000:5000"
+    tty: true
+  {project-name}-phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    networks:
+      - {project-name}-proxy
+    environment:
+      - PMA_HOST={project-name}-mysql
+      - UPLOAD_LIMIT= 2000M
+    ports:
+      - "8000:80"
+    volumes:
+      - ./config/phpmyadmin/config.inc.php:/etc/phpmyadmin/config.inc.php
+    container_name: {project-name}-phpmyadmin
+  {project-name}-mysql:
+    image: mysql:8.0
+    networks:
+      - {project-name}-proxy
+    environment:
+      - TZ=Asia/Taipei
+      - MYSQL_ROOT_PASSWORD=root@root@root
+    volumes:
+      - ./init_data:/docker-entrypoint-initdb.d
+      - ./db/mysql/mysql_data:/var/lib/mysql
+      - ./config/mysql/my.cnf:/etc/mysql/my.cnf
+    container_name: {project-name}-mysql
+  {project-name}-redis:
+    image: redis:7
+    networks:
+      - {project-name}-proxy
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./db/redis/redis_data:/data
+    container_name: {project-name}-redis
+
+networks:
+  {project-name}-proxy:
+    external: true
+    name: {project-name}-network
+
